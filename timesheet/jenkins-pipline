@@ -1,0 +1,62 @@
+def docker_username = "*****";
+
+def docker_password = "*****";
+
+pipeline {
+agent any
+stages {
+       stage('clone and clean repo'){
+          steps{
+              bat "git clone https://gitlab.com/mohamedamine.benhmida1/devops-project.git"
+
+              bat "mvn clean -f devops-project"
+               }
+			                        }
+       stage('Test'){
+           steps {
+              bat "mvn test -f devops-project"
+                 }
+                    }
+	   stage('Package'){
+           steps {
+              bat "mvn package -f devops-project"
+                 }
+                    }
+	   stage('Installation'){
+           steps {
+              bat "mvn install -f devops-project"
+                 }
+                    }
+
+       stage('Deploiement du livrable dans Nexus'){
+           steps{
+
+              bat "mvn deploy -f devops-project"
+
+                }
+                       }
+       stage('SonarQube Test'){
+           steps{
+              bat "mvn sonar:sonar -f devops-project"
+                }
+        }
+        stage('Dockerize'){
+           steps{
+                bat "docker build -t ${docker_username}/devopsimage devops-project"
+                bat "docker login -u ${docker_username} -p ${docker_password}"
+                bat "docker push ${docker_username}/devopsimage"
+            }
+        }
+
+      }
+
+
+    post {
+        success {
+        mail bcc: '', body: 'DEVOPS PROJECT BUILD AND DOCKERIZED', cc: '', replyTo: '', subject: 'BUILD SUCCESS', to: 'mohamedamine.benhmida@outlook.fr'
+        }
+        always {
+        cleanWs()
+        }
+    }
+}

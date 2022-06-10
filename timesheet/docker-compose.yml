@@ -1,0 +1,30 @@
+version: '3.7'
+
+services:
+
+  test-mysql:
+    image: "mysql:5.6"
+    restart: always
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+      MYSQL_ROOT_PASSWORD: root
+
+  backend:
+    depends_on: 
+      - test-mysql
+    build: .
+    ports:
+      - "8911:8911"
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://test-mysql:3306/testdb?autoReconnect=true&failOverReadOnly=false&maxReconnects=10
+      SPRING_DATASOURCE_USERNAME: test
+      SPRING_DATASOURCE_PASSWORD: test
+    links:
+      - test-mysql:test-mysql
+volumes:
+  db_data: {}
